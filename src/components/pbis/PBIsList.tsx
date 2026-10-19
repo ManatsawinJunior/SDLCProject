@@ -58,7 +58,17 @@ function PBIsList({ features }: PBIsListProps) {
     [functions, projectFeatureIds]
   );
 
+  const [selectedFeatureId, setSelectedFeatureId] = useState('');
   const [selectedFunctionId, setSelectedFunctionId] = useState('');
+
+  const availableFunctions = useMemo(
+    () =>
+      selectedFeatureId
+        ? projectFunctions.filter((fn) => fn.featureId === selectedFeatureId)
+        : [],
+    [projectFunctions, selectedFeatureId]
+  );
+
   const [pbis, setPbis] = useState<ProjectPbi[]>(() => {
     const saved = localStorage.getItem('pbis');
 
@@ -81,15 +91,15 @@ function PBIsList({ features }: PBIsListProps) {
     localStorage.setItem('pbis', JSON.stringify(pbis));
   }, [pbis]);
 
-  // If the selected function is no longer available, clear the selection.
+  // Clear the selected Function when the Feature changes or its Function is removed.
   useEffect(() => {
     if (
       selectedFunctionId &&
-      !projectFunctions.some((fn) => fn.functionId === selectedFunctionId)
+      !availableFunctions.some((fn) => fn.functionId === selectedFunctionId)
     ) {
       setSelectedFunctionId('');
     }
-  }, [projectFunctions, selectedFunctionId]);
+  }, [availableFunctions, selectedFunctionId]);
 
   const selectedFunction = projectFunctions.find(
     (fn) => fn.functionId === selectedFunctionId
@@ -224,27 +234,61 @@ function PBIsList({ features }: PBIsListProps) {
         </div>
 
         <div className="mb-4">
-          <label className="form-label" htmlFor="pbi-function-select">
-            Select Function
-          </label>
-          <select
-            id="pbi-function-select"
-            className="form-select"
-            value={selectedFunctionId}
-            onChange={(event) => setSelectedFunctionId(event.target.value)}
-          >
-            <option value="">Select Function</option>
-            {projectFunctions.map((fn) => (
-              <option key={fn.functionId} value={fn.functionId}>
-                {fn.functionName}
-              </option>
-            ))}
-          </select>
-          {projectFunctions.length === 0 && (
+          <div className="row g-3">
+            <div className="col-12 col-md-6">
+              <label className="form-label" htmlFor="pbi-feature-select">
+                1. Select Feature
+              </label>
+              <select
+                id="pbi-feature-select"
+                className="form-select"
+                value={selectedFeatureId}
+                onChange={(event) => {
+                  setSelectedFeatureId(event.target.value);
+                  setSelectedFunctionId('');
+                }}
+              >
+                <option value="">Select Feature</option>
+                {features.map((feature) => (
+                  <option key={feature.featureId} value={feature.featureId}>
+                    {feature.featureName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-12 col-md-6">
+              <label className="form-label" htmlFor="pbi-function-select">
+                2. Select Function
+              </label>
+              <select
+                id="pbi-function-select"
+                className="form-select"
+                value={selectedFunctionId}
+                onChange={(event) => setSelectedFunctionId(event.target.value)}
+                disabled={!selectedFeatureId}
+              >
+                <option value="">Select Function</option>
+                {availableFunctions.map((fn) => (
+                  <option key={fn.functionId} value={fn.functionId}>
+                    {fn.functionName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {selectedFeatureId && availableFunctions.length === 0 && (
             <div className="alert alert-warning mt-3 mb-0">
-              No Functions found for this project. Create a Feature and Function
+              No Functions found under this Feature. Please create a Function
               first.
             </div>
+          )}
+
+          {!selectedFeatureId && (
+            <p className="text-secondary small mt-3 mb-0">
+              Select a Feature first to filter its Functions.
+            </p>
           )}
         </div>
 
@@ -348,11 +392,13 @@ function PBIsList({ features }: PBIsListProps) {
           </>
         )}
 
-        {!selectedFunctionId && projectFunctions.length > 0 && (
-          <p className="text-center text-secondary py-4 mb-0">
-            Please select a Function to view its PBIs.
-          </p>
-        )}
+        {!selectedFunctionId &&
+          selectedFeatureId &&
+          availableFunctions.length > 0 && (
+            <p className="text-center text-secondary py-4 mb-0">
+              Please select a Function to view its PBIs.
+            </p>
+          )}
       </div>
 
       {isModalOpen && (
