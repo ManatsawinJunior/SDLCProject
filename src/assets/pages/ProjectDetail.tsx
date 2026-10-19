@@ -129,13 +129,13 @@ function ProjectDetail({ projects }: ProjectDetailProps) {
     (ft) => ft.projectId === projectId
   );
 
-  if (!project) {
-    return <h2>Project not found</h2>;
-  }
-
   useEffect(() => {
     localStorage.setItem('feature', JSON.stringify(features));
   }, [features]);
+
+  if (!project) {
+    return <h2>Project not found</h2>;
+  }
 
   return (
     <div className="container-fluid p-3">
