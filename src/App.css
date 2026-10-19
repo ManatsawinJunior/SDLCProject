@@ -1,0 +1,141 @@
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.bg-offWrite {
+  background-color: #f2f0e7;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  width: 240px;
+  flex-shrink: 0;
+  color: white;
+  padding: 16px;
+  min-height: 100vh;
+}
+
+.sidebar-menu-main a {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  padding: 6px;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-radius: 5px;
+}
+
+.sidebar-menu-main a:hover {
+  color: rgb(17, 17, 17);
+  background-color: rgba(149, 209, 236, 0.452);
+}
+
+.sidebar-menu a.active {
+  background-color: #ffffff;
+  color: #17365d;
+  border-radius: 6px;
+}
+
+.sidebar-band {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-band h5 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  padding-left: 10px;
+  gap: 10px;
+}
+
+.sidebar-menu a.active {
+  background-color: #ffffff;
+  color: #17365d;
+  border-radius: 6px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  flex-direction: column;
+}
+
+.sidebar-menu-content a {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 7px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-menu-content a:hover {
+  color: rgb(17, 17, 17);
+  background-color: #ffffff;
+}
+
+.sidebar-menu-content-sub p {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  min-height: 64px;
+  padding: 16px 24px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.main-content {
+  flex: 1;
+  padding: 24px;
+  background-color: #f3f6fb;
+}
+
+.app-footer {
+  padding: 16px 24px;
+  background-color: #ffffff;
+  border-top: 1px solid #e5e7eb;
+}
+
+.project-card {
+  height: 120px;
+}
+
+.project-card .card-body {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  padding: 0;
+}
+
+.project-card .card-body p {
+  margin: 2px;
+}
