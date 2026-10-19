@@ -5,6 +5,7 @@ import type {
   WorkStatus,
   Priority,
   ProjectFunction,
+  ProjectPbi,
 } from '../types/projectFunctional.ts';
 
 import users from '../utility/user';
@@ -19,6 +20,15 @@ import { useState, useEffect } from 'react';
 
 interface ProjectDetailProps {
   projects: ProjectList[];
+}
+
+function readStoredArray<T>(key: string, fallback: T[] = []): T[] {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? (JSON.parse(saved) as T[]) : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function ProjectDetail({ projects }: ProjectDetailProps) {
@@ -129,6 +139,27 @@ function ProjectDetail({ projects }: ProjectDetailProps) {
     (ft) => ft.projectId === projectId
   );
 
+  // Read the latest saved Function/PBI data for the Overview dashboard.
+  const overviewFunctions = readStoredArray<ProjectFunction>(
+    'functions',
+    ProjectFunctionList
+  ).filter((fn) => feature.some((ft) => ft.featureId === fn.featureId));
+
+  const overviewPbis = readStoredArray<ProjectPbi>('pbis').filter((pbi) =>
+    overviewFunctions.some((fn) => fn.functionId === pbi.functionId)
+  );
+
+  const overviewTeamOwners = Array.from(
+    new Set(
+      [
+        project?.owner ?? '',
+        ...feature.map((ft) => ft.featureOwner),
+        ...overviewFunctions.map((fn) => fn.functionOwner),
+        ...overviewPbis.map((pbi) => pbi.pbiOwner),
+      ].filter(Boolean)
+    )
+  );
+
   useEffect(() => {
     localStorage.setItem('feature', JSON.stringify(features));
   }, [features]);
@@ -189,185 +220,287 @@ function ProjectDetail({ projects }: ProjectDetailProps) {
       {/* Main Content */}
       {activeTab === 'Overview' && (
         <div className="row g-3">
-          {/* Left Column */}
           <div className="col-12 col-lg-8">
-            {/* About Project */}
-            <div className="card border rounded-4 mb-3">
-              <div className="card-body p-3">
-                <h6 className="fw-bold mb-2">About this project</h6>
-
-                <p className="text-secondary small mb-3">
-                  Goal, scope, and current status.
-                </p>
-
-                <p className="small mb-3">
-                  {project.name} is a project focused on improving workflow,
-                  managing development tasks, and tracking delivery progress.
-                </p>
-
-                {[
-                  'Define project requirements and scope',
-                  'Develop core functions',
-                  'Review and test completed features',
-                  'Prepare for release',
-                ].map((item, index) => (
-                  <div
-                    className="d-flex align-items-center gap-2 py-2 border-top"
-                    key={item}
-                  >
-                    <i
-                      className={`bi ${
-                        index < 2
-                          ? 'bi-check-circle-fill text-success'
-                          : 'bi-circle text-secondary'
-                      }`}
-                    ></i>
-                    <span className="small">{item}</span>
+            {/* Project summary */}
+            <div className="card border-0 shadow-sm rounded-4 mb-3">
+              <div className="card-body p-4">
+                <div className="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <h6 className="fw-bold mb-1">Project Summary</h6>
+                    <p className="text-secondary small mb-0">
+                      Overview of Features, Functions and Product Backlog Items.
+                    </p>
                   </div>
-                ))}
+                  <span className="badge bg-primary-subtle text-primary rounded-pill">
+                    {project.status}
+                  </span>
+                </div>
+                <p className="small mb-0">
+                  {project.name} — track the scope, breakdown and assigned
+                  owners of work in this project.
+                </p>
               </div>
             </div>
 
-            {/* Project Statistics */}
-            <div className="card border rounded-4 mb-3">
-              <div className="card-body p-3">
-                <div className="row g-2">
-                  <div className="col-6 col-md-3 border-end">
-                    <h5 className="fw-bold mb-1">
-                      24<span className="text-secondary small">/35</span>
-                    </h5>
-                    <p className="text-secondary small mb-0">Tasks · 16 done</p>
+            {/* Live counts */}
+            <div className="row g-3 mb-3">
+              <div className="col-12 col-md-4">
+                <div className="card border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body p-3">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="text-secondary small">Features</span>
+                      <span className="rounded-3 bg-primary-subtle text-primary p-2">
+                        <i className="bi bi-layers" />
+                      </span>
+                    </div>
+                    <h3 className="fw-bold mb-1">{feature.length}</h3>
+                    <div className="text-secondary small">In this project</div>
                   </div>
-
-                  <div className="col-6 col-md-3 border-end">
-                    <h5 className="fw-bold mb-1">23 d</h5>
-                    <p className="text-secondary small mb-0">Until deadline</p>
+                </div>
+              </div>
+              <div className="col-12 col-md-4">
+                <div className="card border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body p-3">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="text-secondary small">Functions</span>
+                      <span className="rounded-3 bg-success-subtle text-success p-2">
+                        <i className="bi bi-diagram-3" />
+                      </span>
+                    </div>
+                    <h3 className="fw-bold mb-1">{overviewFunctions.length}</h3>
+                    <div className="text-secondary small">
+                      Under project Features
+                    </div>
                   </div>
-
-                  <div className="col-6 col-md-3 border-end">
-                    <h5 className="fw-bold mb-1">
-                      $11K<span className="text-secondary small">/24k</span>
-                    </h5>
-                    <p className="text-secondary small mb-0">
-                      Budget · 45% used
-                    </p>
-                  </div>
-
-                  <div className="col-6 col-md-3">
-                    <h5 className="fw-bold mb-1">2.3x</h5>
-                    <p className="text-secondary small mb-0">
-                      Traffic vs baseline
-                    </p>
+                </div>
+              </div>
+              <div className="col-12 col-md-4">
+                <div className="card border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body p-3">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="text-secondary small">PBIs</span>
+                      <span className="rounded-3 bg-warning-subtle text-warning-emphasis p-2">
+                        <i className="bi bi-card-checklist" />
+                      </span>
+                    </div>
+                    <h3 className="fw-bold mb-1">{overviewPbis.length}</h3>
+                    <div className="text-secondary small">
+                      Under project Functions
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Recent Tasks */}
-            <div className="card border rounded-4">
-              <div className="card-body p-3">
+            {/* Feature breakdown */}
+            <div className="card border-0 shadow-sm rounded-4">
+              <div className="card-body p-4">
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <div>
-                    <h6 className="fw-bold mb-1">Recent Tasks</h6>
+                    <h6 className="fw-bold mb-1">Feature Breakdown</h6>
                     <p className="text-secondary small mb-0">
-                      5 of 24 · Due this week
+                      Functions and PBIs grouped by Feature
                     </p>
                   </div>
-
-                  <div className="d-flex gap-2">
-                    <button className="btn btn-sm btn-light border">
-                      View all
-                    </button>
-                    <button className="btn btn-sm btn-light border">
-                      + New
-                    </button>
-                  </div>
+                  <span className="badge bg-light text-dark border">
+                    {feature.length} total
+                  </span>
                 </div>
 
-                {[
-                  {
-                    title: 'Define project requirements',
-                    detail: 'Documentation · Due tomorrow',
-                    status: 'In review',
-                  },
-                  {
-                    title: 'Develop core functions',
-                    detail: 'Development · Due Friday',
-                    status: 'In progress',
-                  },
-                  {
-                    title: 'Test completed features',
-                    detail: 'Testing · Next week',
-                    status: 'To do',
-                  },
-                ].map((task) => (
-                  <div
-                    className="d-flex align-items-center gap-3 border-top py-3"
-                    key={task.title}
-                  >
-                    <input className="form-check-input mt-0" type="checkbox" />
-                    <div className="flex-grow-1">
-                      <div className="small fw-semibold">{task.title}</div>
-                      <div className="text-secondary small">{task.detail}</div>
+                {feature.map((ft) => {
+                  const featureFunctions = overviewFunctions.filter(
+                    (fn) => fn.featureId === ft.featureId
+                  );
+                  const functionIds = featureFunctions.map(
+                    (fn) => fn.functionId
+                  );
+                  const featurePbis = overviewPbis.filter((pbi) =>
+                    functionIds.includes(pbi.functionId)
+                  );
+
+                  return (
+                    <div
+                      className="border rounded-3 p-3 mb-3"
+                      key={ft.featureId}
+                    >
+                      <div className="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                          <div className="text-secondary small">
+                            {ft.featureId}
+                          </div>
+                          <h6 className="fw-bold mb-1 mt-1">
+                            {ft.featureName}
+                          </h6>
+                          <div className="text-secondary small">
+                            Owner: {ft.featureOwner}
+                          </div>
+                        </div>
+                        <span className="badge bg-light text-dark border">
+                          {ft.featureStatus}
+                        </span>
+                      </div>
+
+                      <div className="row g-2 mt-2 mb-3">
+                        <div className="col-6">
+                          <div className="bg-light rounded-3 p-2">
+                            <div className="small text-secondary">
+                              Functions
+                            </div>
+                            <div className="fw-bold">
+                              {featureFunctions.length}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-6">
+                          <div className="bg-light rounded-3 p-2">
+                            <div className="small text-secondary">PBIs</div>
+                            <div className="fw-bold">{featurePbis.length}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {featureFunctions.length > 0 ? (
+                        <div className="d-flex flex-column gap-2">
+                          {featureFunctions.map((fn) => {
+                            const functionPbis = featurePbis.filter(
+                              (pbi) => pbi.functionId === fn.functionId
+                            );
+                            return (
+                              <div
+                                className="border-top pt-2"
+                                key={fn.functionId}
+                              >
+                                <div className="d-flex justify-content-between align-items-start gap-2">
+                                  <div>
+                                    <div className="small fw-semibold">
+                                      {fn.functionName}
+                                    </div>
+                                    <div className="text-secondary small">
+                                      {fn.functionId} · Owner:{' '}
+                                      {fn.functionOwner}
+                                    </div>
+                                  </div>
+                                  <span className="badge bg-primary-subtle text-primary">
+                                    {functionPbis.length} PBIs
+                                  </span>
+                                </div>
+                                {functionPbis.length > 0 && (
+                                  <ul className="small text-secondary mt-2 mb-0 ps-4">
+                                    {functionPbis.map((pbi) => (
+                                      <li key={pbi.pbiId} className="mb-1">
+                                        {pbi.pbiTitle} ({pbi.pbiStatus})
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-secondary small">
+                          No Functions have been added to this Feature yet.
+                        </div>
+                      )}
                     </div>
-                    <span className="text-secondary small">{task.status}</span>
-                  </div>
-                ))}
+                  );
+                })}
+
+                {feature.length === 0 && (
+                  <p className="text-center text-secondary py-4 mb-0">
+                    No Features found for this project.
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Right Column */}
+          {/* Right column */}
           <div className="col-12 col-lg-4">
-            {/* Team */}
-            <div className="card border rounded-4 mb-3">
-              <div className="card-body p-3">
-                <div className="d-flex justify-content-between align-items-center">
-                  <h6 className="fw-bold mb-1">Team</h6>
-                  <button className="btn btn-sm btn-light">+</button>
+            <div className="card border-0 shadow-sm rounded-4 mb-3">
+              <div className="card-body p-4">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <div>
+                    <h6 className="fw-bold mb-1">Project Team</h6>
+                    <p className="text-secondary small mb-0">
+                      {overviewTeamOwners.length} assigned owners
+                    </p>
+                  </div>
+                  <span className="rounded-3 bg-light p-2">
+                    <i className="bi bi-people" />
+                  </span>
                 </div>
 
-                <p className="text-secondary small mb-3">4 members</p>
+                {overviewTeamOwners.map((owner) => {
+                  const user = users.find(
+                    (item) =>
+                      item.username === owner ||
+                      `${item.profile.first_name} ${item.profile.last_name}` ===
+                        owner
+                  );
+                  const displayName = user
+                    ? `${user.profile.first_name} ${user.profile.last_name}`.trim()
+                    : owner;
+                  const initials = displayName
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((part) => part[0].toUpperCase())
+                    .join('');
 
-                {[
-                  { name: 'Manatsawin', role: 'Project Lead', initial: 'M' },
-                  {
-                    name: 'Developer A',
-                    role: 'Software Developer',
-                    initial: 'A',
-                  },
-                  { name: 'Developer B', role: 'IoT Developer', initial: 'B' },
-                  { name: 'DX Team', role: 'Team Member', initial: 'D' },
-                ].map((member) => (
-                  <div
-                    className="d-flex align-items-center gap-2 mb-3"
-                    key={member.name}
-                  >
+                  const ownedFeatures = feature.filter(
+                    (ft) => ft.featureOwner === owner
+                  ).length;
+                  const ownedFunctions = overviewFunctions.filter(
+                    (fn) => fn.functionOwner === owner
+                  ).length;
+                  const ownedPbis = overviewPbis.filter(
+                    (pbi) => pbi.pbiOwner === owner
+                  ).length;
+
+                  return (
                     <div
-                      className="rounded-circle bg-light d-flex align-items-center justify-content-center"
-                      style={{ width: 34, height: 34 }}
+                      className="d-flex align-items-start gap-2 py-3 border-top"
+                      key={owner}
                     >
-                      {member.initial}
-                    </div>
-
-                    <div className="flex-grow-1">
-                      <div className="small fw-semibold">{member.name}</div>
-                      <div className="text-secondary" style={{ fontSize: 11 }}>
-                        {member.role}
+                      <div
+                        className="rounded-circle bg-light d-flex align-items-center justify-content-center fw-semibold text-primary flex-shrink-0"
+                        style={{ width: 38, height: 38 }}
+                      >
+                        {initials || '?'}
+                      </div>
+                      <div className="flex-grow-1 min-w-0">
+                        <div className="small fw-semibold text-break">
+                          {displayName}
+                        </div>
+                        <div
+                          className="text-secondary"
+                          style={{ fontSize: 11 }}
+                        >
+                          {owner === project.owner
+                            ? 'Project Owner'
+                            : 'Assigned to project work'}
+                        </div>
+                        <div className="text-secondary small mt-1">
+                          {ownedFeatures} Features · {ownedFunctions} Functions
+                          · {ownedPbis} PBIs
+                        </div>
                       </div>
                     </div>
+                  );
+                })}
 
-                    <span className="text-secondary small">100%</span>
-                  </div>
-                ))}
+                {overviewTeamOwners.length === 0 && (
+                  <p className="text-secondary small mb-0">
+                    No assigned owners yet.
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Project Info */}
-            <div className="card border rounded-4">
-              <div className="card-body p-3">
-                <h6 className="fw-bold mb-3">Project info</h6>
-
+            <div className="card border-0 shadow-sm rounded-4">
+              <div className="card-body p-4">
+                <h6 className="fw-bold mb-3">Project Info</h6>
                 {[
                   { label: 'Project ID', value: project.id },
                   { label: 'Owner', value: project.owner },
