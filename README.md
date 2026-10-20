@@ -33,3 +33,8 @@ See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rule
 
 
 # React + TypeScript + Vite : How to use this project
+
+```bash
+npm install
+npm run dev
+```
